@@ -168,47 +168,39 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
-    elif data == 'music_lofi':
-        await query.edit_message_text("🎧 Отправляю Lofi трек...")
-        audio_path = os.path.join(os.getcwd(), 'music', 'lofi1.mp3')
+     elif data.startswith('music_'):
+        music_map = {
+            'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
+            'music_rain': ('rain.mp3', 'Звуки дождя'),
+            'music_piano': ('piano.mp3', 'Нежное фортепиано')
+        }
+        filename, title = music_map[data]
+        await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
+        
+        # ИСПРАВЛЕНО: путь относительно папки, где лежит bot.py
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        audio_path = os.path.join(base_dir, 'music', filename)
+        
         try:
             with open(audio_path, 'rb') as audio:
                 await context.bot.send_audio(
-                    chat_id=query.message.chat_id, audio=audio,
-                    title="Lofi Hip Hop", performer="AntiStress Flow"
+                    chat_id=query.message.chat_id,
+                    audio=audio,
+                    title=title,
+                    performer="AntiStress Flow"
                 )
             keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
-            await context.bot.send_message(chat_id=query.message.chat_id, text="🎵 Готово!", reply_markup=InlineKeyboardMarkup(keyboard))
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text="✅ Трек отправлен! Приятного прослушивания.",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
         except FileNotFoundError:
-            await context.bot.send_message(chat_id=query.message.chat_id, text="❌ Файл не найден.")
-
-    elif data == 'music_rain':
-        await query.edit_message_text("🌧 Отправляю звуки дождя...")
-        audio_path = os.path.join(os.getcwd(), 'music', 'rain.mp3')
-        try:
-            with open(audio_path, 'rb') as audio:
-                await context.bot.send_audio(
-                    chat_id=query.message.chat_id, audio=audio,
-                    title="Звуки дождя", performer="AntiStress Flow"
-                )
-            keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
-            await context.bot.send_message(chat_id=query.message.chat_id, text="🌧 Готово!", reply_markup=InlineKeyboardMarkup(keyboard))
-        except FileNotFoundError:
-            await context.bot.send_message(chat_id=query.message.chat_id, text="❌ Файл не найден.")
-
-    elif data == 'music_piano':
-        await query.edit_message_text("🎹 Отправляю фортепиано...")
-        audio_path = os.path.join(os.getcwd(), 'music', 'piano.mp3')
-        try:
-            with open(audio_path, 'rb') as audio:
-                await context.bot.send_audio(
-                    chat_id=query.message.chat_id, audio=audio,
-                    title="Нежное фортепиано", performer="AntiStress Flow"
-                )
-            keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
-            await context.bot.send_message(chat_id=query.message.chat_id, text="🎹 Готово!", reply_markup=InlineKeyboardMarkup(keyboard))
-        except FileNotFoundError:
-            await context.bot.send_message(chat_id=query.message.chat_id, text="❌ Файл не найден.")
+            # Для отладки: показываем, где бот искал файл
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=f"❌ Файл не найден.\nПуть поиска: {audio_path}"
+            )
 
 # ========== ЗАПУСК ==========
 def main():
