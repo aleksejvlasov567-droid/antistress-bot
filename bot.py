@@ -24,20 +24,15 @@ def run_health_server():
     server.serve_forever()
 
 # ========== КОМАНДЫ ==========
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
-        [InlineKeyboardButton("🎵 Слушать музыку", callback_data='music_menu')],
-        [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
-    ]
-    await update.message.reply_text(
-        "👋 Привет! Выбери раздел:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("/start — меню\n/help — помощь")
+    help_text = (
+        "🆘 ПОМОЩЬ ПО БОТУ\n\n"
+        "/start — открыть главное меню\n"
+        "/help — показать это сообщение"
+    )
+    await update.message.reply_text(help_text)
 
+# ========== ОБРАБОТЧИК КНОПОК ==========
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -46,51 +41,111 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == 'exercises':
         keyboard = [
             [InlineKeyboardButton("🫁 Квадратное дыхание", callback_data='breath')],
-            [InlineKeyboardButton("👁 5-4-3-2-1", callback_data='grounding')],
+            [InlineKeyboardButton("👁 Техника 5-4-3-2-1", callback_data='grounding')],
             [InlineKeyboardButton("🧍 Сканер тела", callback_data='body_scan')],
             [InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]
         ]
-        await query.edit_message_text("Выбери упражнение:", reply_markup=InlineKeyboardMarkup(keyboard))
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "🧠 Выбери упражнение:\n\n"
+            "🫁 Квадратное дыхание — успокаивает за 1 минуту\n"
+            "👁 5-4-3-2-1 — помогает при тревоге и панике\n"
+            "🧍 Сканер тела — расслабляет мышцы",
+            reply_markup=reply_markup
+        )
 
     elif data == 'music_menu':
         keyboard = [
-            [InlineKeyboardButton("🎧 Lofi", callback_data='music_lofi')],
-            [InlineKeyboardButton("🌧 Дождь", callback_data='music_rain')],
-            [InlineKeyboardButton("🎹 Фортепиано", callback_data='music_piano')],
+            [InlineKeyboardButton("🎧 Lofi Hip Hop", callback_data='music_lofi')],
+            [InlineKeyboardButton("🌧 Звуки дождя", callback_data='music_rain')],
+            [InlineKeyboardButton("🎹 Спокойное фортепиано", callback_data='music_piano')],
             [InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]
         ]
-        await query.edit_message_text("Выбери музыку:", reply_markup=InlineKeyboardMarkup(keyboard))
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "🎵 Выбери тип музыки:\n\n"
+            "🎧 Lofi — спокойный бит\n"
+            "🌧 Дождь — звуки природы\n"
+            "🎹 Фортепиано — нежная музыка",
+            reply_markup=reply_markup
+        )
 
     elif data == 'info':
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]]
-        await query.edit_message_text(
-            "📘 Стресс — реакция на нагрузку.\n🚨 Признаки: усталость, раздражительность.",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        info_text = (
+            "📘 ЧТО ТАКОЕ СТРЕСС?\n\n"
+            "Стресс — это реакция организма на нагрузку.\n\n"
+            "🚨 ПРИЗНАКИ:\n"
+            "• Трудно сосредоточиться\n"
+            "• Быстрая утомляемость\n"
+            "• Раздражительность\n\n"
+            "💡 ЧТО ДЕЛАТЬ?\n"
+            "1. Дыши медленно\n"
+            "2. Слушай спокойную музыку\n"
+            "3. Переключай внимание"
         )
+        await query.edit_message_text(info_text, reply_markup=reply_markup)
 
     elif data == 'back_to_main':
         keyboard = [
             [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
-            [InlineKeyboardButton("🎵 Музыка", callback_data='music_menu')],
+            [InlineKeyboardButton("🎵 Слушать музыку", callback_data='music_menu')],
             [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
         ]
-        await query.edit_message_text("Главное меню:", reply_markup=InlineKeyboardMarkup(keyboard))
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text("👋 Главное меню:", reply_markup=reply_markup)
 
     elif data == 'breath':
-        text = "🫁 Вдох 4 сек — задержка 4 сек — выдох 4 сек — задержка 4 сек. Повтори 4-5 раз."
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+        text = (
+            "🫁 КВАДРАТНОЕ ДЫХАНИЕ\n\n"
+            "1️⃣ ВДОХ через нос — 4 секунды\n"
+            "2️⃣ ЗАДЕРЖКА — 4 секунды\n"
+            "3️⃣ ВЫДОХ через рот — 4 секунды\n"
+            "4️⃣ ЗАДЕРЖКА — 4 секунды\n\n"
+            "🔄 Повтори 4–5 раз."
+        )
+        keyboard = [
+            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
+            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup)
 
     elif data == 'grounding':
-        text = "👁 Найди: 5 предметов, 4 ощущения, 3 звука, 2 запаха, 1 вкус."
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+        text = (
+            "👁 ТЕХНИКА 5-4-3-2-1\n\n"
+            "Найди вокруг:\n"
+            "5️⃣ ПЯТЬ предметов\n"
+            "4️⃣ ЧЕТЫРЕ ощущения\n"
+            "3️⃣ ТРИ звука\n"
+            "2️⃣ ДВА запаха\n"
+            "1️⃣ ОДИН вкус"
+        )
+        keyboard = [
+            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
+            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup)
 
     elif data == 'body_scan':
-        text = "🧍 Расслабь ступни, ноги, поясницу, живот, плечи, лицо."
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
-
+        text = (
+            "🧍 СКАНЕР ТЕЛА\n\n"
+            "Расслабь по очереди:\n"
+            "👣 Ступни\n"
+            "🦵 Ноги\n"
+            "🍑 Поясницу\n"
+            "🤲 Живот и грудь\n"
+            "💪 Плечи и руки\n"
+            "🧠 Лицо и челюсть"
+        )
+        keyboard = [
+            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
+            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup)
     elif data.startswith('music_'):
         music_map = {
             'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
