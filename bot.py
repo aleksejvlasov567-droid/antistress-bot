@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ========== НАСТРОЙКИ ==========
-TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  
+TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"
 
 # ========== HTTP-СЕРВЕР ДЛЯ RENDER HEALTH CHECK ==========
 class HealthHandler(BaseHTTPRequestHandler):
@@ -23,7 +23,21 @@ def run_health_server():
     print(f"✅ Health check на порту {port}")
     server.serve_forever()
 
-# ========== КОМАНДЫ ==========
+# ========== КОМАНДА /start ==========
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
+        [InlineKeyboardButton("🎵 Слушать музыку", callback_data='music_menu')],
+        [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "👋 Привет! Я бот для быстрого снятия стресса.\n\n"
+        "Выбери, что хочешь сделать:",
+        reply_markup=reply_markup
+    )
+
+# ========== КОМАНДА /help ==========
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
         "🆘 ПОМОЩЬ ПО БОТУ\n\n"
@@ -146,6 +160,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
+
     elif data.startswith('music_'):
         music_map = {
             'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
@@ -155,7 +170,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         filename, title = music_map[data]
         await query.edit_message_text(f"🎵 Отправляю: {title}...")
 
-        # Путь к файлу в Docker-контейнере
         audio_path = os.path.join(os.path.dirname(__file__), 'music', filename)
 
         try:
@@ -183,6 +197,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text=f"❌ Ошибка: {e}"
             )
 
+# ========== ЗАПУСК ==========
 def main():
     threading.Thread(target=run_health_server, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
