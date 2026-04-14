@@ -1,12 +1,11 @@
 import os
 import threading
-import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ========== НАСТРОЙКИ ==========
-TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # ⚠️ Замени на свой токен от BotFather
+TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # ⚠️ Замени на свой токен
 
 # ========== HTTP-СЕРВЕР ДЛЯ RENDER HEALTH CHECK ==========
 class HealthHandler(BaseHTTPRequestHandler):
@@ -24,50 +23,20 @@ def run_health_server():
     print(f"✅ Health check на порту {port}")
     server.serve_forever()
 
-# ========== ВСТРОЕННЫЕ АУДИОФАЙЛЫ (BASE64) ==========
-# Это укороченные версии твоих треков (15 секунд), закодированные в Base64.
-# Они отправляются напрямую из кода, без внешних файлов.
-
-AUDIO_LOFI = """
-//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAB
-nQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
-eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
-rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
-5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
-"""
-
-AUDIO_RAIN = """
-//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAA
-BnQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
-eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
-rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
-5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
-"""
-
-AUDIO_PIANO = """
-//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAA
-BnQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
-eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
-rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
-5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
-"""
-
-# ========== КОМАНДЫ БОТА ==========
+# ========== КОМАНДЫ ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
         [InlineKeyboardButton("🎵 Слушать музыку", callback_data='music_menu')],
         [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "👋 Привет! Я бот для быстрого снятия стресса.\n\n"
-        "Выбери, что хочешь сделать:",
-        reply_markup=reply_markup
+        "👋 Привет! Выбери раздел:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("/start — главное меню\n/help — помощь")
+    await update.message.reply_text("/start — меню\n/help — помощь")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -95,8 +64,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == 'info':
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]]
         await query.edit_message_text(
-            "📘 Стресс — реакция организма на нагрузку.\n\n"
-            "🚨 Признаки: усталость, раздражительность.",
+            "📘 Стресс — реакция на нагрузку.\n🚨 Признаки: усталость, раздражительность.",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -124,41 +92,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif data.startswith('music_'):
-        audio_map = {
-            'music_lofi': (AUDIO_LOFI, 'Lofi Hip Hop'),
-            'music_rain': (AUDIO_RAIN, 'Звуки дождя'),
-            'music_piano': (AUDIO_PIANO, 'Нежное фортепиано')
+        music_map = {
+            'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
+            'music_rain': ('rain.mp3', 'Звуки дождя'),
+            'music_piano': ('piano.mp3', 'Нежное фортепиано')
         }
-        b64_str, title = audio_map[data]
-        await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
+        filename, title = music_map[data]
+        await query.edit_message_text(f"🎵 Отправляю: {title}...")
+
+        # Путь к файлу в Docker-контейнере
+        audio_path = os.path.join(os.path.dirname(__file__), 'music', filename)
 
         try:
-            clean_b64 = ''.join(b64_str.split())
-            audio_bytes = base64.b64decode(clean_b64)
-            await context.bot.send_audio(
-                chat_id=query.message.chat_id,
-                audio=audio_bytes,
-                title=title,
-                performer="AntiStress Flow",
-                filename=f"{title}.mp3"
-            )
-            keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
+            with open(audio_path, 'rb') as audio:
+                await context.bot.send_audio(
+                    chat_id=query.message.chat_id,
+                    audio=audio,
+                    title=title,
+                    performer="AntiStress Flow"
+                )
+            keyboard = [[InlineKeyboardButton("🔙 В меню", callback_data='music_menu')]]
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
-                text="✅ Трек отправлен! Приятного прослушивания.",
+                text="✅ Готово!",
                 reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except FileNotFoundError:
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=f"❌ Файл {filename} не найден.\nПроверь папку music на GitHub."
             )
         except Exception as e:
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
-                text=f"❌ Ошибка при отправке: {e}\n\n"
-                     f"🎧 Попробуй включить '{title}' в любом плеере."
-            )
-            keyboard = [[InlineKeyboardButton("🔙 В меню", callback_data='music_menu')]]
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text="Выбери действие:",
-                reply_markup=InlineKeyboardMarkup(keyboard)
+                text=f"❌ Ошибка: {e}"
             )
 
 def main():
