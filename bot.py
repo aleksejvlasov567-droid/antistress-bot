@@ -1,4 +1,3 @@
-[bot.py](https://github.com/user-attachments/files/26712688/bot.py)
 import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
