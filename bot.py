@@ -4,9 +4,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ========== ТОКЕН ==========
-TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"
- # Замени на свой токен от BotFather
+# ========== НАСТРОЙКИ ==========
+TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # ⚠️ Замени на токен от BotFather
 
 # ========== HTTP-СЕРВЕР ДЛЯ RENDER HEALTH CHECK ==========
 class HealthHandler(BaseHTTPRequestHandler):
@@ -15,9 +14,9 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write(b'OK')
-    
+
     def log_message(self, format, *args):
-        pass  # Не засоряем логи
+        pass
 
 def run_health_server():
     port = int(os.environ.get('PORT', 10000))
@@ -33,7 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     welcome_text = (
         "👋 Привет! Я бот для быстрого снятия стресса.\n\n"
         "Выбери, что хочешь сделать:\n"
@@ -41,7 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🎵 Музыка — спокойные треки для отдыха\n"
         "ℹ️ О стрессе — короткая информация"
     )
-    
+
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
 # ========== КОМАНДА /help ==========
@@ -49,7 +48,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
         "🆘 ПОМОЩЬ ПО БОТУ\n\n"
         "/start — открыть главное меню\n"
-        "/help — показать это сообщение"
+        "/help — показать это сообщение\n\n"
+        "🤖 Что умеет бот:\n"
+        "• Показывать дыхательные упражнения\n"
+        "• Отправлять спокойную музыку\n"
+        "• Рассказывать о природе стресса"
     )
     await update.message.reply_text(help_text)
 
@@ -59,6 +62,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     data = query.data
 
+    # --- Упражнения ---
     if data == 'exercises':
         keyboard = [
             [InlineKeyboardButton("🫁 Квадратное дыхание", callback_data='breath')],
@@ -75,6 +79,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+    # --- Меню музыки ---
     elif data == 'music_menu':
         keyboard = [
             [InlineKeyboardButton("🎧 Lofi Hip Hop", callback_data='music_lofi')],
@@ -91,6 +96,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+    # --- Информация о стрессе ---
     elif data == 'info':
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -108,6 +114,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.edit_message_text(info_text, reply_markup=reply_markup)
 
+    # --- Назад в главное меню ---
     elif data == 'back_to_main':
         keyboard = [
             [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
@@ -117,6 +124,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text("👋 Главное меню:", reply_markup=reply_markup)
 
+    # --- Упражнение: Квадратное дыхание ---
     elif data == 'breath':
         text = (
             "🫁 КВАДРАТНОЕ ДЫХАНИЕ\n\n"
@@ -133,6 +141,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
+    # --- Упражнение: 5-4-3-2-1 ---
     elif data == 'grounding':
         text = (
             "👁 ТЕХНИКА 5-4-3-2-1\n\n"
@@ -150,6 +159,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
+    # --- Упражнение: Сканер тела ---
     elif data == 'body_scan':
         text = (
             "🧍 СКАНЕР ТЕЛА\n\n"
@@ -168,7 +178,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
-     elif data.startswith('music_'):
+    # --- Отправка музыки ---
+    elif data.startswith('music_'):
         music_map = {
             'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
             'music_rain': ('rain.mp3', 'Звуки дождя'),
@@ -176,11 +187,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         filename, title = music_map[data]
         await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
-        
-        # ИСПРАВЛЕНО: путь относительно папки, где лежит bot.py
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
         audio_path = os.path.join(base_dir, 'music', filename)
-        
+
         try:
             with open(audio_path, 'rb') as audio:
                 await context.bot.send_audio(
@@ -196,7 +206,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         except FileNotFoundError:
-            # Для отладки: показываем, где бот искал файл
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text=f"❌ Файл не найден.\nПуть поиска: {audio_path}"
@@ -204,11 +213,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ========== ЗАПУСК ==========
 def main():
-    # Запускаем веб-сервер в отдельном потоке (для Render)
-    health_thread = threading.Thread(target=run_health_server, daemon=True)
-    health_thread.start()
-    
-    # Запускаем бота
+    threading.Thread(target=run_health_server, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
