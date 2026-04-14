@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ========== НАСТРОЙКИ ==========
-TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # ⚠️ Замени на свой токен
+TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  
 
 # ========== HTTP-СЕРВЕР ДЛЯ RENDER HEALTH CHECK ==========
 class HealthHandler(BaseHTTPRequestHandler):
