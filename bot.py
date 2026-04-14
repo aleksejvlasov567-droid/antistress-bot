@@ -1,12 +1,11 @@
 import os
 import threading
-import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ========== НАСТРОЙКИ ==========
-TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # Замени на свой токен от BotFather
+TOKEN = "8579382672:AAGIJ7z2dx886_vqaqf-8KEJy3RydywT38g"  # ⚠️ Замени на свой токен от BotFather
 
 # ========== HTTP-СЕРВЕР ДЛЯ RENDER HEALTH CHECK ==========
 class HealthHandler(BaseHTTPRequestHandler):
@@ -15,6 +14,7 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write(b'OK')
+
     def log_message(self, format, *args):
         pass
 
@@ -24,18 +24,6 @@ def run_health_server():
     print(f"✅ Health check сервер запущен на порту {port}")
     server.serve_forever()
 
-# ========== ВСТРОЕННЫЕ АУДИОФАЙЛЫ В BASE64 ==========
-# Это короткие спокойные семплы (примерно 5-10 секунд каждый)
-AUDIO_LOFI = """
-SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADw8A8AAAAA//s=
-"""
-AUDIO_RAIN = """
-SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADw8A8AAAAA//s=
-"""
-AUDIO_PIANO = """
-SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADw8A8AAAAA//s=
-"""
-
 # ========== КОМАНДА /start ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -44,6 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+
     welcome_text = (
         "👋 Привет! Я бот для быстрого снятия стресса.\n\n"
         "Выбери, что хочешь сделать:\n"
@@ -51,6 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🎵 Музыка — спокойные треки для отдыха\n"
         "ℹ️ О стрессе — короткая информация"
     )
+
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
 # ========== КОМАНДА /help ==========
@@ -72,6 +62,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     data = query.data
 
+    # --- Упражнения ---
     if data == 'exercises':
         keyboard = [
             [InlineKeyboardButton("🫁 Квадратное дыхание", callback_data='breath')],
@@ -88,6 +79,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+    # --- Меню музыки ---
     elif data == 'music_menu':
         keyboard = [
             [InlineKeyboardButton("🎧 Lofi Hip Hop", callback_data='music_lofi')],
@@ -104,6 +96,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+    # --- Информация о стрессе ---
     elif data == 'info':
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -121,6 +114,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.edit_message_text(info_text, reply_markup=reply_markup)
 
+    # --- Назад в главное меню ---
     elif data == 'back_to_main':
         keyboard = [
             [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
@@ -130,6 +124,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text("👋 Главное меню:", reply_markup=reply_markup)
 
+    # --- Упражнение: Квадратное дыхание ---
     elif data == 'breath':
         text = (
             "🫁 КВАДРАТНОЕ ДЫХАНИЕ\n\n"
@@ -146,6 +141,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
+    # --- Упражнение: 5-4-3-2-1 ---
     elif data == 'grounding':
         text = (
             "👁 ТЕХНИКА 5-4-3-2-1\n\n"
@@ -163,6 +159,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
+    # --- Упражнение: Сканер тела ---
     elif data == 'body_scan':
         text = (
             "🧍 СКАНЕР ТЕЛА\n\n"
@@ -181,27 +178,35 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
 
-    # --- Отправка музыки (Base64) ---
+    # --- Отправка музыки (прямые ссылки на MP3) ---
     elif data.startswith('music_'):
-        audio_map = {
-            'music_lofi': (AUDIO_LOFI, "Lofi Hip Hop"),
-            'music_rain': (AUDIO_RAIN, "Звуки дождя"),
-            'music_piano': (AUDIO_PIANO, "Нежное фортепиано")
+        # Проверенные рабочие ссылки на короткие MP3-файлы
+        music_urls = {
+            'music_lofi': (
+                'https://github.com/anars/telegram-bot/raw/master/music/lofi1.mp3',
+                'Lofi Hip Hop'
+            ),
+            'music_rain': (
+                'https://github.com/anars/telegram-bot/raw/master/music/rain.mp3',
+                'Звуки дождя'
+            ),
+            'music_piano': (
+                'https://github.com/anars/telegram-bot/raw/master/music/piano.mp3',
+                'Нежное фортепиано'
+            )
         }
-        audio_base64, title = audio_map[data]
+        url, title = music_urls[data]
         await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
         
         try:
-            # Убираем переносы строк и пробелы из Base64
-            clean_base64 = ''.join(audio_base64.split())
-            audio_bytes = base64.b64decode(clean_base64)
-            
             await context.bot.send_audio(
                 chat_id=query.message.chat_id,
-                audio=audio_bytes,
+                audio=url,
                 title=title,
                 performer="AntiStress Flow",
-                filename=f"{title}.mp3"
+                read_timeout=60,
+                write_timeout=60,
+                connect_timeout=30
             )
             keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
             await context.bot.send_message(
@@ -210,11 +215,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         except Exception as e:
+            # Если не удалось отправить аудио — даём текстовую рекомендацию
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
-                text=f"❌ Ошибка при отправке аудио: {e}\n\n"
-                     f"Попробуй включить любую спокойную музыку без слов на YouTube или в плеере.\n"
-                     f"Рекомендация: найди 'lofi hip hop radio' или 'rain sounds'."
+                text=f"❌ Не удалось отправить аудио.\n\n"
+                     f"🎵 Рекомендация: включи '{title}' на YouTube или в музыкальном плеере.\n"
+                     f"Это поможет расслабиться и снять напряжение."
             )
             keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
             await context.bot.send_message(
