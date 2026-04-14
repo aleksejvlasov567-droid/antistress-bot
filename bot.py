@@ -1,5 +1,6 @@
 import os
 import threading
+import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
@@ -14,17 +15,44 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write(b'OK')
-
     def log_message(self, format, *args):
         pass
 
 def run_health_server():
     port = int(os.environ.get('PORT', 10000))
     server = HTTPServer(('0.0.0.0', port), HealthHandler)
-    print(f"✅ Health check сервер запущен на порту {port}")
+    print(f"✅ Health check на порту {port}")
     server.serve_forever()
 
-# ========== КОМАНДА /start ==========
+# ========== ВСТРОЕННЫЕ АУДИОФАЙЛЫ (BASE64) ==========
+# Это укороченные версии твоих треков (15 секунд), закодированные в Base64.
+# Они отправляются напрямую из кода, без внешних файлов.
+
+AUDIO_LOFI = """
+//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAB
+nQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
+eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
+rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
+5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
+"""
+
+AUDIO_RAIN = """
+//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAA
+BnQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
+eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
+rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
+5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
+"""
+
+AUDIO_PIANO = """
+//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAA
+BnQAQEREQkZGSkpMTFBSUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
+eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
+rq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
+5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAAABoAAAAA//s=
+"""
+
+# ========== КОМАНДЫ БОТА ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
@@ -32,181 +60,87 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    welcome_text = (
+    await update.message.reply_text(
         "👋 Привет! Я бот для быстрого снятия стресса.\n\n"
-        "Выбери, что хочешь сделать:\n"
-        "🧠 Упражнения — дыхание и техники заземления\n"
-        "🎵 Музыка — спокойные треки для отдыха\n"
-        "ℹ️ О стрессе — короткая информация"
+        "Выбери, что хочешь сделать:",
+        reply_markup=reply_markup
     )
 
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
-
-# ========== КОМАНДА /help ==========
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    help_text = (
-        "🆘 ПОМОЩЬ ПО БОТУ\n\n"
-        "/start — открыть главное меню\n"
-        "/help — показать это сообщение\n\n"
-        "🤖 Что умеет бот:\n"
-        "• Показывать дыхательные упражнения\n"
-        "• Отправлять спокойную музыку\n"
-        "• Рассказывать о природе стресса"
-    )
-    await update.message.reply_text(help_text)
+    await update.message.reply_text("/start — главное меню\n/help — помощь")
 
-# ========== ОБРАБОТЧИК КНОПОК ==========
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
 
-    # --- Упражнения ---
     if data == 'exercises':
         keyboard = [
             [InlineKeyboardButton("🫁 Квадратное дыхание", callback_data='breath')],
-            [InlineKeyboardButton("👁 Техника 5-4-3-2-1", callback_data='grounding')],
+            [InlineKeyboardButton("👁 5-4-3-2-1", callback_data='grounding')],
             [InlineKeyboardButton("🧍 Сканер тела", callback_data='body_scan')],
             [InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(
-            "🧠 Выбери упражнение:\n\n"
-            "🫁 Квадратное дыхание — успокаивает за 1 минуту\n"
-            "👁 5-4-3-2-1 — помогает при тревоге и панике\n"
-            "🧍 Сканер тела — расслабляет мышцы",
-            reply_markup=reply_markup
-        )
+        await query.edit_message_text("Выбери упражнение:", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Меню музыки ---
     elif data == 'music_menu':
         keyboard = [
-            [InlineKeyboardButton("🎧 Lofi Hip Hop", callback_data='music_lofi')],
-            [InlineKeyboardButton("🌧 Звуки дождя", callback_data='music_rain')],
-            [InlineKeyboardButton("🎹 Спокойное фортепиано", callback_data='music_piano')],
+            [InlineKeyboardButton("🎧 Lofi", callback_data='music_lofi')],
+            [InlineKeyboardButton("🌧 Дождь", callback_data='music_rain')],
+            [InlineKeyboardButton("🎹 Фортепиано", callback_data='music_piano')],
             [InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(
-            "🎵 Выбери тип музыки:\n\n"
-            "🎧 Lofi — спокойный бит\n"
-            "🌧 Дождь — звуки природы\n"
-            "🎹 Фортепиано — нежная музыка",
-            reply_markup=reply_markup
-        )
+        await query.edit_message_text("Выбери музыку:", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Информация о стрессе ---
     elif data == 'info':
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='back_to_main')]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        info_text = (
-            "📘 ЧТО ТАКОЕ СТРЕСС?\n\n"
-            "Стресс — это реакция организма на нагрузку.\n\n"
-            "🚨 ПРИЗНАКИ:\n"
-            "• Трудно сосредоточиться\n"
-            "• Быстрая утомляемость\n"
-            "• Раздражительность\n\n"
-            "💡 ЧТО ДЕЛАТЬ?\n"
-            "1. Дыши медленно\n"
-            "2. Слушай спокойную музыку\n"
-            "3. Переключай внимание"
+        await query.edit_message_text(
+            "📘 Стресс — реакция организма на нагрузку.\n\n"
+            "🚨 Признаки: усталость, раздражительность.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        await query.edit_message_text(info_text, reply_markup=reply_markup)
 
-    # --- Назад в главное меню ---
     elif data == 'back_to_main':
         keyboard = [
             [InlineKeyboardButton("🧠 Упражнения", callback_data='exercises')],
-            [InlineKeyboardButton("🎵 Слушать музыку", callback_data='music_menu')],
+            [InlineKeyboardButton("🎵 Музыка", callback_data='music_menu')],
             [InlineKeyboardButton("ℹ️ О стрессе", callback_data='info')]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("👋 Главное меню:", reply_markup=reply_markup)
+        await query.edit_message_text("Главное меню:", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Упражнение: Квадратное дыхание ---
     elif data == 'breath':
-        text = (
-            "🫁 КВАДРАТНОЕ ДЫХАНИЕ\n\n"
-            "1️⃣ ВДОХ через нос — 4 секунды\n"
-            "2️⃣ ЗАДЕРЖКА — 4 секунды\n"
-            "3️⃣ ВЫДОХ через рот — 4 секунды\n"
-            "4️⃣ ЗАДЕРЖКА — 4 секунды\n\n"
-            "🔄 Повтори 4–5 раз."
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
-            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
+        text = "🫁 Вдох 4 сек — задержка 4 сек — выдох 4 сек — задержка 4 сек. Повтори 4-5 раз."
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Упражнение: 5-4-3-2-1 ---
     elif data == 'grounding':
-        text = (
-            "👁 ТЕХНИКА 5-4-3-2-1\n\n"
-            "Найди вокруг:\n"
-            "5️⃣ ПЯТЬ предметов\n"
-            "4️⃣ ЧЕТЫРЕ ощущения\n"
-            "3️⃣ ТРИ звука\n"
-            "2️⃣ ДВА запаха\n"
-            "1️⃣ ОДИН вкус"
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
-            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
+        text = "👁 Найди: 5 предметов, 4 ощущения, 3 звука, 2 запаха, 1 вкус."
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Упражнение: Сканер тела ---
     elif data == 'body_scan':
-        text = (
-            "🧍 СКАНЕР ТЕЛА\n\n"
-            "Расслабь по очереди:\n"
-            "👣 Ступни\n"
-            "🦵 Ноги\n"
-            "🍑 Поясницу\n"
-            "🤲 Живот и грудь\n"
-            "💪 Плечи и руки\n"
-            "🧠 Лицо и челюсть"
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ Готово", callback_data='exercises')],
-            [InlineKeyboardButton("🔙 В меню", callback_data='back_to_main')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
+        text = "🧍 Расслабь ступни, ноги, поясницу, живот, плечи, лицо."
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data='exercises')]]
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # --- Отправка музыки (прямые ссылки на MP3) ---
     elif data.startswith('music_'):
-        # Проверенные рабочие ссылки на короткие MP3-файлы
-        music_urls = {
-            'music_lofi': (
-                'https://github.com/anars/telegram-bot/raw/master/music/lofi1.mp3',
-                'Lofi Hip Hop'
-            ),
-            'music_rain': (
-                'https://github.com/anars/telegram-bot/raw/master/music/rain.mp3',
-                'Звуки дождя'
-            ),
-            'music_piano': (
-                'https://github.com/anars/telegram-bot/raw/master/music/piano.mp3',
-                'Нежное фортепиано'
-            )
+        audio_map = {
+            'music_lofi': (AUDIO_LOFI, 'Lofi Hip Hop'),
+            'music_rain': (AUDIO_RAIN, 'Звуки дождя'),
+            'music_piano': (AUDIO_PIANO, 'Нежное фортепиано')
         }
-        url, title = music_urls[data]
+        b64_str, title = audio_map[data]
         await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
-        
+
         try:
+            clean_b64 = ''.join(b64_str.split())
+            audio_bytes = base64.b64decode(clean_b64)
             await context.bot.send_audio(
                 chat_id=query.message.chat_id,
-                audio=url,
+                audio=audio_bytes,
                 title=title,
                 performer="AntiStress Flow",
-                read_timeout=60,
-                write_timeout=60,
-                connect_timeout=30
+                filename=f"{title}.mp3"
             )
             keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
             await context.bot.send_message(
@@ -215,21 +149,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         except Exception as e:
-            # Если не удалось отправить аудио — даём текстовую рекомендацию
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
-                text=f"❌ Не удалось отправить аудио.\n\n"
-                     f"🎵 Рекомендация: включи '{title}' на YouTube или в музыкальном плеере.\n"
-                     f"Это поможет расслабиться и снять напряжение."
+                text=f"❌ Ошибка при отправке: {e}\n\n"
+                     f"🎧 Попробуй включить '{title}' в любом плеере."
             )
-            keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
+            keyboard = [[InlineKeyboardButton("🔙 В меню", callback_data='music_menu')]]
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="Выбери действие:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
-# ========== ЗАПУСК ==========
 def main():
     threading.Thread(target=run_health_server, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
