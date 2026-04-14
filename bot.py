@@ -181,35 +181,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # --- Отправка музыки ---
     elif data.startswith('music_'):
         music_map = {
-            'music_lofi': ('lofi1.mp3', 'Lofi Hip Hop'),
-            'music_rain': ('rain.mp3', 'Звуки дождя'),
-            'music_piano': ('piano.mp3', 'Нежное фортепиано')
+            'music_lofi': 'https://www.chosic.com/wp-content/uploads/2021/07/purrple-cat-equinox.mp3',
+            'music_rain': 'https://www.chosic.com/wp-content/uploads/2021/04/rain.mp3',
+            'music_piano': 'https://www.chosic.com/wp-content/uploads/2021/04/soft-piano.mp3'
         }
-        filename, title = music_map[data]
-        await query.edit_message_text(f"🎵 Отправляю трек: {title}...")
-
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        audio_path = os.path.join(base_dir, 'music', filename)
-
-        try:
-            with open(audio_path, 'rb') as audio:
-                await context.bot.send_audio(
-                    chat_id=query.message.chat_id,
-                    audio=audio,
-                    title=title,
-                    performer="AntiStress Flow"
-                )
-            keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text="✅ Трек отправлен! Приятного прослушивания.",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        except FileNotFoundError:
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text=f"❌ Файл не найден.\nПуть поиска: {audio_path}"
-            )
+        url = music_map[data]
+        await query.edit_message_text("🎵 Отправляю трек...")
+        await context.bot.send_audio(
+            chat_id=query.message.chat_id,
+            audio=url,
+            title="AntiStress Flow"
+        )
+        keyboard = [[InlineKeyboardButton("🔙 В меню музыки", callback_data='music_menu')]]
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text="✅ Трек отправлен!",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 # ========== ЗАПУСК ==========
 def main():
     threading.Thread(target=run_health_server, daemon=True).start()
